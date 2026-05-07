@@ -1,4 +1,4 @@
-name: Build and Push Docker Image
+name: Build and Push Docker Images
 
 on:
   push:
@@ -11,8 +11,8 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  BACKEND_IMAGE_NAME: ${{ github.repository_owner }}/brainbridge-backend
-  NGINCX_IMAGE_NAME: ${{ github.repository_owner }}/brainbridge-nginx
+  IMAGE_OWNER: yeochi1201
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build-and-push:
@@ -23,11 +23,6 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
 
-      - name: Convert image names to lowercase
-        run: |
-          echo "BACKEND_IMAGE_NAME=${{ env.BACKEND_IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]' >> $GITHUB_ENV
-          echo "NGINX_IMAGE_NAME=${{ env.NGINX_IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]' >> $GITHUB_ENV
-
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -35,22 +30,22 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and Push Backend image
+      - name: Build and push backend image
         uses: docker/build-push-action@v6
         with:
           context: ./backend
           file: ./backend/Dockerfile
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME_LC }}:latest
-            ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME_LC }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/brainbridge-backend:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/brainbridge-backend:${{ github.sha }}
 
-      - name: Build and Push Nginx image
+      - name: Build and push nginx image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./nginx/Dockerfile
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.NGINX_IMAGE_NAME_LC }}:latest
-            ${{ env.REGISTRY }}/${{ env.NGINX_IMAGE_NAME_LC }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/brainbridge-nginx:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/brainbridge-nginx:${{ github.sha }}
