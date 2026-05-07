@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+
+set -e
+
+echo "===================================="
+echo "1. Update package index"
+echo "===================================="
+sudo apt update
+sudo apt upgrade -y
+
+echo "===================================="
+echo "2. Install basic packages, Git, UFW"
+echo "===================================="
+sudo apt install -y \
+  curl \
+  wget \
+  git \
+  vim \
+  unzip \
+  ca-certificates \
+  gnupg \
+  lsb-release \
+  ufw
+
+echo "===================================="
+echo "3. Remove old Docker packages if exist"
+echo "===================================="
+sudo apt remove -y \
+  docker.io \
+  docker-doc \
+  docker-compose \
+  docker-compose-v2 \
+  podman-docker \
+  containerd \
+  runc || true
+
+echo "===================================="
+echo "4. Add Docker GPG key"
+echo "===================================="
+sudo install -m 0755 -d /etc/apt/keyrings
+
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
+sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+echo "===================================="
+echo "5. Add Docker repository"
+echo "===================================="
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+  https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+echo "===================================="
+echo "6. Install Docker and Docker Compose"
+echo "===================================="
+sudo apt update
+
+sudo apt install -y \
+  docker-ce \
+  docker-ce-cli \
+  containerd.io \
+  docker-buildx-plugin \
+  docker-compose-plugin
+
+echo "===================================="
+echo "7. Add current user to docker group"
+echo "===================================="
+sudo usermod -aG docker "$USER"
+
+echo "===================================="
+echo "8. Configure UFW"
+echo "===================================="
+
+# SSH: allow only your current public IP
+sudo ufw allow from <public ip> to any port 22 proto tcp
+
+# Web ports
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+
+echo "===================================="
+echo "9. Enable UFW"
+echo "===================================="
+sudo ufw --force enable
+
+echo "===================================="
+echo "10. Check installed versions"
+echo "===================================="
+git --version
+docker --version
+docker compose version
+sudo ufw status verbose
+
+echo "===================================="
+echo "Setup completed."
+echo "Please logout and login again, or run: newgrp docker"
+echo "===================================="
