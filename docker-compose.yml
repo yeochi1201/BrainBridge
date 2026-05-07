@@ -19,9 +19,7 @@ services:
       retries: 5
 
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: ghcr.io/yeochi1201/brainbridge-backend:latest
     container_name: brainbridge-backend
     restart: always
     depends_on:
@@ -38,35 +36,19 @@ services:
     networks:
       - brainbridge-net
 
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: brainbridge-frontend-build
-    volumes:
-      - frontend_dist:/app/dist
-    command: sh -c "npm run build && cp -r dist/* /frontend-dist"
-    networks:
-      - brainbridge-net
-
   nginx:
-    image: nginx:stable-alpine
+    image: ghcr.io/yeochi1201/brainbridge-nginx:latest
     container_name: brainbridge-nginx
     restart: always
     depends_on:
       - backend
-      - frontend
     ports:
       - "80:80"
-    volumes:
-      - frontend_dist:/usr/share/nginx/html:ro
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     networks:
       - brainbridge-net
 
 volumes:
   postgres_data:
-  frontend_dist:
 
 networks:
   brainbridge-net:
